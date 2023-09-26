@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 
 ## Data path
-project_path = '/Users/qingwuliu/Documents/Code/LUMPI_new'
+project_path = '/Users/qingwuliu/Documents/Code/LUMPI_new/LUMPI_new'
 data_path = '/Users/qingwuliu/Documents/'
 classifyTracks_path = os.path.join(data_path, 'measurement4/classifyTracks.csv')
 metadata_path = os.path.join(data_path, 'measurement4/meta.json')
@@ -27,6 +27,10 @@ with open(metadata_path, 'r') as json_file:
     # Load the JSON data into a Python data structure (usually a dictionary)
     data = json.load(json_file)
 
+def draw_points(frame, x, y, image_index):
+    color = (0, 255, 0)
+    cv2.circle(frame, (int(x), int(y)), 10, color, -1)
+
 
 def get_transform_parameters(session_ID, data):
     # camera: Intrinsic parameters and extrinsic parameters
@@ -39,13 +43,11 @@ def get_transform_parameters(session_ID, data):
     tvec = np.array(camera_parameter['tvec'])
     rvec = np.array(camera_parameter['rvec'])
     rotation_matrix, _ = cv2.Rodrigues(rvec)
-    lidar_matrix = np.hstack((rotation_matrix, tvec.reshape(-1, 1)))
-    lidar_matrix = np.vstack((lidar_matrix, np.array([0, 0, 0, 1])))
 
-    return K, R_t, lidar_matrix
+    return K, R_t, rotation_matrix, tvec.reshape(3)
 
 
-def points_lid2cam(lidar_point, lidar_matrix, camera_intrinsic_matrix):
+def points_lid2cam(lidar_point, rotation_matrix, tvec, camera_intrinsic_matrix):
     """
     :param lidar_point: (x, y, z), it will be changed to homogeneous point (x, y, z, 1)
     :param lidar_matrix: 4x4
@@ -54,15 +56,16 @@ def points_lid2cam(lidar_point, lidar_matrix, camera_intrinsic_matrix):
              pixel_point: points in pixel coordinates [u, v]
     """
     K = camera_intrinsic_matrix
-    lidar_point_homogeneous = np.hstack((lidar_point, 1))
-    camera_point_homogeneous = np.dot(lidar_matrix, lidar_point_homogeneous)
-    camera_point_Lid2img = camera_point_homogeneous[:3] / camera_point_homogeneous[3]
+
+    camera_point_Lid2img = np.dot(rotation_matrix, lidar_point) + tvec
+    print(f'camera_point_Lid2img: {camera_point_Lid2img}')
     pixel_point = np.dot(K, camera_point_Lid2img)
+    print(f'pixel_point: {pixel_point}')
+
     u = pixel_point[0] / pixel_point[2]
     v = pixel_point[1] / pixel_point[2]
+    print(f'u and v: {(u, v)}')
     return camera_point_Lid2img, u, v
-
-
 
 def compute_box_3d(obj, P):
     """ Takes an object and a projection matrix (P) and projects the 3d
@@ -102,11 +105,15 @@ def compute_box_3d(obj, P):
     return corners_2d, np.transpose(corners_3d)
 
 number_session = 68
-K, R_t, external_matrix = get_transform_parameters(number_session, data)
-## test lidar_point to pixel coordinates.
-lidar_points = np.array([23.16, 34.73, -0.625])
-points_cam_coordinate, u, v = points_lid2cam(lidar_points, external_matrix, K)
 
+
+lidar_points = np.array([-10, 17.279, -0.64])
+lidar_points = np.array([43, 10, -1])
+
+
+K, R_t, rotation_matrix_lidar, tvec = get_transform_parameters(number_session, data)
+points_cam_coordinate, u, v = points_lid2cam(lidar_points, rotation_matrix_lidar, tvec, K)
+draw_points(frame, u, v, 0)
 df = pd.read_csv(classifyTracks_path)
 label_dict = {}
 
@@ -120,44 +127,10 @@ for image_index in tqdm(range(1)):
     label_dict[f"{image_index}"] = obj_dict
 
 color = (0, 255, 0)  # Green color in BGR format
-frame = cv2.imread(os.path.join(project_path, 'measurement4/images', '000000.jpg'))
-print(f'frame: {frame.shape}')
-object_dict = {}
-# for item in label_dict['0']:
-item = label_dict['0'][2]
-tmp = {}
-time = item[0]
-object_id = item[1]
-top_x = item[2]
-top_y = item[3]
-width = item[4]
-height = item[5]
-score = item[6]
-class_id = item[6]
-visibility = item[7]
-x_3d = item[9]
-y_3d = item[10]
-z_3d = item[11]
-len_3d = item[12]
-wid_3d = item[13]
-hei_3d = item[14]
-angle_3d = item[15]
-tmp['time'] = item[0]
-tmp['x'] = x_3d
-tmp['y'] = y_3d
-tmp['z'] = z_3d
-tmp['l'] = len_3d
-tmp['w'] = wid_3d
-tmp['h'] = hei_3d
-tmp['ry'] = angle_3d
+K, R_t, rotation_matrix_lidar, tvec = get_transform_parameters(number_session, data)
 
-# print(f'Type of tmp: {type(tmp)} \n'
-#       f'tmp: {tmp}')
-lidar_points = np.array([top_x, top_y, z_3d + hei_3d / 2])
-number_session = 68
-K, R_t, external_matrix = get_transform_parameters(number_session, data)
-_, u, v = points_lid2cam(lidar_points, external_matrix, K)
-print(f'u, v: {(u, v)}')
-print(f'lidar_points: {lidar_points}')
-cv2.circle(frame, (int(u), int(v)), 10, color, -1)
+for item in label_dict['0']:
+    lidar_point = np.array([item[9], item[10], item[11]])
+    points_cam_coordinate, u, v = points_lid2cam(lidar_point, rotation_matrix_lidar, tvec, K)
+    draw_points(frame, u, v, 0)
 cv2.imwrite(os.path.join(save_path, f'{"%06d" % image_index}.jpg'), frame)
