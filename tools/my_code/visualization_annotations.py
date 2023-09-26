@@ -1,17 +1,22 @@
 import json
 import os
-
+import sys
 import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-## Data path
+## project path and add it into sys path
 project_path = '/Users/qingwuliu/Documents/Code/LUMPI_new/LUMPI_new'
+sys.path.append(project_path)
+from utils.utils import draw_points, get_transform_parameters, points_lid2cam
+
+
+## Data path
 data_path = '/Users/qingwuliu/Documents/'
 classifyTracks_path = os.path.join(data_path, 'measurement4/classifyTracks.csv')
 metadata_path = os.path.join(data_path, 'measurement4/meta.json')
-save_path = os.path.join(data_path, 'results/')
+save_path = os.path.join(data_path, 'measurement4/results/')
 if not os.path.exists(save_path):
     os.makedirs(save_path)
     print(f'Creating save path, {save_path}')
@@ -26,47 +31,6 @@ fps_camera = 30
 with open(metadata_path, 'r') as json_file:
     # Load the JSON data into a Python data structure (usually a dictionary)
     data = json.load(json_file)
-
-def draw_points(frame, x, y, image_index):
-    color = (0, 255, 0)
-    cv2.circle(frame, (int(x), int(y)), 10, color, -1)
-
-
-def get_transform_parameters(session_ID, data):
-    # camera: Intrinsic parameters and extrinsic parameters
-    num_session = str(session_ID)  # video 6 for experiment 4
-    camera_parameter = data['session'][num_session]
-    K = np.array(camera_parameter['intrinsic'])  # intrinsic parameters
-    R_t = np.array(camera_parameter['extrinsic'])  # extrinsic parameters
-
-    # Lidar: Transform matrix from lidar coordinate to image coordinate
-    tvec = np.array(camera_parameter['tvec'])
-    rvec = np.array(camera_parameter['rvec'])
-    rotation_matrix, _ = cv2.Rodrigues(rvec)
-
-    return K, R_t, rotation_matrix, tvec.reshape(3)
-
-
-def points_lid2cam(lidar_point, rotation_matrix, tvec, camera_intrinsic_matrix):
-    """
-    :param lidar_point: (x, y, z), it will be changed to homogeneous point (x, y, z, 1)
-    :param lidar_matrix: 4x4
-    :param camera_intrinsic_matrix: camera intrinsic matrix, 3x3
-    :return: camera_point_Lid2img: points in image coordinates [x, y, z]
-             pixel_point: points in pixel coordinates [u, v]
-    """
-    K = camera_intrinsic_matrix
-
-    camera_point_Lid2img = np.dot(rotation_matrix, lidar_point) + tvec
-    print(f'camera_point_Lid2img: {camera_point_Lid2img}')
-    pixel_point = np.dot(K, camera_point_Lid2img)
-    print(f'pixel_point: {pixel_point}')
-
-    u = pixel_point[0] / pixel_point[2]
-    v = pixel_point[1] / pixel_point[2]
-    print(f'u and v: {(u, v)}')
-    return camera_point_Lid2img, u, v
-
 def compute_box_3d(obj, P):
     """ Takes an object and a projection matrix (P) and projects the 3d
         bounding box into the image plane.
@@ -107,30 +71,27 @@ def compute_box_3d(obj, P):
 number_session = 68
 
 
-lidar_points = np.array([-10, 17.279, -0.64])
-lidar_points = np.array([43, 10, -1])
-
-
-K, R_t, rotation_matrix_lidar, tvec = get_transform_parameters(number_session, data)
-points_cam_coordinate, u, v = points_lid2cam(lidar_points, rotation_matrix_lidar, tvec, K)
-draw_points(frame, u, v, 0)
 df = pd.read_csv(classifyTracks_path)
 label_dict = {}
-
-for image_index in tqdm(range(1)):
-    obj_dict = []
-    for index in range(len(df)):
-        current_row = df.iloc[index]
-        if (0.1 * image_index) <= current_row[0] <= 0.1 * (image_index + 1):
-            obj_dict.append(current_row)
-
-    label_dict[f"{image_index}"] = obj_dict
 
 color = (0, 255, 0)  # Green color in BGR format
 K, R_t, rotation_matrix_lidar, tvec = get_transform_parameters(number_session, data)
 
-for item in label_dict['0']:
-    lidar_point = np.array([item[9], item[10], item[11]])
-    points_cam_coordinate, u, v = points_lid2cam(lidar_point, rotation_matrix_lidar, tvec, K)
-    draw_points(frame, u, v, 0)
-cv2.imwrite(os.path.join(save_path, f'{"%06d" % image_index}.jpg'), frame)
+for image_index in tqdm(range(10)):
+    print(f'image_index: {image_index}')
+    print(f'time duration: {0.1 * image_index} to {0.1* image_index + 1}')
+    frame = cv2.imread(os.path.join(data_path, f'measurement4/images/{"%06d" % image_index}.jpg'))
+    obj_dict = []
+    for index in range(len(df)):
+        current_row = df.iloc[index]
+        if (0.1 * image_index) <= current_row[0] < 0.1 * (image_index + 1):
+            obj_dict.append(current_row)
+
+    label_dict[f"{image_index}"] = obj_dict
+
+    for item in obj_dict:
+        lidar_point = np.array([item[9], item[10], item[11]])
+        points_cam_coordinate, u, v = points_lid2cam(lidar_point, rotation_matrix_lidar, tvec, K)
+        draw_points(frame, u, v, 0)
+    cv2.imwrite(os.path.join(save_path, f'{"%06d" % image_index}.jpg'), frame)
+    print(f'Please find the image in {save_path}')
