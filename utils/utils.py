@@ -33,11 +33,11 @@ def points_lid2cam(lidar_point, rotation_matrix, tvec, camera_intrinsic_matrix):
     K = camera_intrinsic_matrix
 
     camera_point_Lid2img = np.dot(rotation_matrix, lidar_point) + tvec
-    print(f'camera_point_Lid2img: {camera_point_Lid2img}')
+    # print(f'camera_point_Lid2img: {camera_point_Lid2img}')
     pixel_point = np.dot(K, camera_point_Lid2img)
-    print(f'pixel_point: {pixel_point}')
+    # print(f'pixel_point: {pixel_point}')
 
     u = pixel_point[0] / pixel_point[2]
     v = pixel_point[1] / pixel_point[2]
-    print(f'u and v: {(u, v)}')
+    # print(f'u and v: {(u, v)}')
     return camera_point_Lid2img, u, v

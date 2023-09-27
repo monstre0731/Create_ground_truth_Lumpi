@@ -53,10 +53,10 @@ print(f'Total object: {len(object_ids)}')
 #        'h_3d', 'heading'],
 #       dtype='object')
 total_dict = {}
-# for index_object in tqdm(range(len(object_ids))):
-for index_object in tqdm(range(1)):
-    object_id = object_ids[index_object]
 
+# for index_object in tqdm(range(len(object_ids))):
+for index_object in tqdm(range(11)):
+    object_id = object_ids[index_object]
     time_list = []
     x_3d_list = []
     y_3d_list = []
