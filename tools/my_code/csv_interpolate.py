@@ -70,6 +70,7 @@ for index_object in tqdm(range(11)):
             l_3d = item_row['l_3d']
             w_3d = item_row['w_3d']
             h_3d = item_row['h_3d']
+            obj_score = item_row['score']
             time_list.append(item_row["time"])
             x_3d_list.append(item_row["x_3d"])
             y_3d_list.append(item_row["y_3d"])
@@ -77,13 +78,16 @@ for index_object in tqdm(range(11)):
             visibility_list.append(item_row["visibility"])
             heading_list.append(item_row["heading"])
 
+    time_interpolation = find_time_interpolation(time_list[0], time_list[-1])
+
     t_ = np.array(time_list)
     x_ = np.array(x_3d_list)
     y_ = np.array(y_3d_list)
     z_ = np.array(z_3d_list)
     v_ = np.array(visibility_list)
     h_ = np.array(heading_list)
-    time_interpolation = find_time_interpolation(time_list[0], time_list[-1])
+
+
     x_3d_interpolation = []
     y_3d_interpolation = []
     z_3d_interpolation = []
@@ -127,6 +131,10 @@ for index_object in tqdm(range(11)):
         threed_list['heading'] = h_inter
         threed_info_list.append(threed_list)
 
+    # Index(['time', 'id_track', 'x_2d', 'y_2d', ' w_2d', 'h_2d', 'score',
+    #        'class_id', 'visibility', 'x_3d', 'y_3d', 'z_3d', 'l_3d', ' w_3d',
+    #        'h_3d', 'heading'],
+    #       dtype='object')
     print(f'len of x_3d_final: {len(x_3d_interpolation)}')
     print(f'len of y_3d_final: {len(y_3d_interpolation)}')
     print(f'len of z_3d_final: {len(z_3d_interpolation)}')

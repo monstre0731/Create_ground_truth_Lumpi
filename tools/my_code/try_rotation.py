@@ -1,17 +1,28 @@
 import numpy as np
 
-# 定义LiDAR点
-lidar_point = np.array([0, 0, 1])
+# Define the input list A
+A = [[0, 1, 1, 1], [3, 1, 1, 3], [6, 3, 3]]
 
-# 定义旋转矩阵A
-A = np.array([[1, 0, 0],
-              [0, 1, 0],
-              [0, 0, 1]])  # 这是一个单位矩阵，表示没有旋转
+# Extract the x-values (first column) and y-values (second column)
+x_values = [item[0] for item in A]
+y_values = [item[1:] for item in A]
 
-# 定义平移矩阵tvec
-tvec = np.array([0, 100, -100])
+# Convert the lists to NumPy arrays
+x_values = np.array(x_values)
+y_values = np.array(y_values)
 
-# 计算相机坐标系中的点
-camera_point = np.dot(A, lidar_point) + tvec
+# Define the new x-values you want to interpolate to
+new_x_values = np.arange(7)
 
-print("Camera Point:", camera_point)
+# Initialize an empty array to store the interpolated results
+interpolated_results = []
+
+# Interpolate for each row of y-values
+for row in y_values:
+    interpolated_row = np.interp(new_x_values, x_values, row)
+    interpolated_results.append(interpolated_row)
+
+# Stack the interpolated rows to form the final array
+interpolated_array = np.array(interpolated_results)
+
+print(interpolated_array)
