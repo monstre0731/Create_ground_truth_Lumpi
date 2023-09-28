@@ -81,10 +81,8 @@ class row_labels:
         self.total = [self.frame] + self.info
 
 
-csv_filename = os.path.join(save_path, "fps_30.csv")
+csv_filename = os.path.join(save_path, "fps_30_1.csv")
 
-# with open(csv_filename, 'w', newline='') as csv_file:
-#     csv_writer = csv.writer(csv_file)
 with open(csv_filename, 'a', newline='') as csv_file:
     csv_writer = csv.writer(csv_file)
     for index_id in tqdm(id_list):
@@ -105,14 +103,17 @@ with open(csv_filename, 'a', newline='') as csv_file:
             interpolated_col = np.interp(new_x, x, col)
             # print(f'shape: {interpolated_col.shape}')
             interpolated_values.append(interpolated_col)
-
         # Stack the interpolated columns horizontally to form the final array
         interpolated_array = np.column_stack(interpolated_values)
         new_x_reshaped = new_x.reshape(-1, 1)
         data_current_id = np.hstack((new_x_reshaped, interpolated_array))
-        csv_writer.writerows(data_current_id)
-        # for row in data_current_id:
-        #     csv_writer.writerow(row)
+        arr = data_current_id
+        max_decimal_places = max(
+            [len(str(round(elem, 3)).split('.')[1]) if isinstance(elem, float) else 0 for elem in arr.flatten()])
+        # 使用 np.around() 将所有元素四舍五入到最大小数位数
+        formatted_arr = np.around(arr, max_decimal_places)
+        # data_current_id_2_after_point = np.array([float(f"{x:.3f}") for x in data_current_id])
+        csv_writer.writerows(formatted_arr)
 
 print(f'finish writing')
 
