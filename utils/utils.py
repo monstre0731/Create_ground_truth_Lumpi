@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def compute_box_3d(obj, P):
     """ Takes an object and a projection matrix (P) and projects the 3d
         bounding box into the image plane.
@@ -38,8 +39,17 @@ def compute_box_3d(obj, P):
     # print 'corners_2d: ', corners_2d
     return corners_2d, np.transpose(corners_3d)
 
-def draw_points(frame, x, y, color):
+
+def draw_points(frame, x, y, color, object_id):
     # color = (0, 255, 0)
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    font_color = (255, 255, 255)  # 白色
+    font_thickness = 2
+    text = str(object_id)
+
+    # 在图像上添加文本
+    cv2.putText(frame, text, (int(x-1), int(y - 1)), font, font_scale, font_color, font_thickness)
     cv2.circle(frame, (int(x), int(y)), 10, color, -1)
 
 
