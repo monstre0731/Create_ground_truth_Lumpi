@@ -10,17 +10,19 @@ project_path = '/'
 sys.path.append(project_path)
 
 ## data path
-data_path = '/scratch2/liuqin/dataset/LUMPI'
-classifyTracks_path = os.path.join(data_path, 'measurement4/classifyTracks_cp.csv')
-save_path = os.path.join(data_path, 'measurement4/results/')
-
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
-    print(f'Creating save path, {save_path}')
-else:
-    print(f'save path has already existed: {save_path}')
+data_path = '/Users/qingwuliu/Documents/measurement4/'
+classifyTracks_path = os.path.join(data_path, 'classifyTracks.csv')
+save_path = os.path.join(data_path, 'results/')
 
 
+def check_exists_path(item_path):
+    if not os.path.exists(item_path):
+        os.makedirs(item_path)
+        print(f'Creating save path, {item_path}')
+    else:
+        print(f'save path has already existed: {item_path}')
+
+check_exists_path(save_path)
 keys = ['time', 'id_track', 'x_2d', 'y_2d', 'w_2d', 'h_2d', 'score', 'class_id', 'visibility', 'x_3d', 'y_3d', 'z_3d',
         'l_3d', 'w_3d', 'h_3d', 'heading']
 
@@ -71,9 +73,9 @@ for object_id_index in total_object_id:
         total_results.append(row)
 annotation_data_array = np.array(total_results)
 annotation_data_by_frame = annotation_data_array[annotation_data_array[:, 0].argsort()]
-save_path = os.path.join(data_path, 'measurement4/results/')
+save_path = os.path.join(data_path, 'results/')
 csv_file_path = os.path.join(save_path, f"total_inter.csv")
-
+check_exists_path(csv_file_path)
 with open(csv_file_path, mode='w', newline='') as file:
     csv_writer = csv.writer(file)
     csv_writer.writerows(annotation_data_by_frame)

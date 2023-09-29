@@ -8,7 +8,7 @@ import pandas as pd
 from tqdm import tqdm
 
 ## project path and add it into sys path
-project_path = '/Users/qingwuliu/Documents/Code/LUMPI_new/LUMPI_new'
+project_path = '/'
 sys.path.append(project_path)
 from utils.utils import draw_points, get_transform_parameters, points_lid2cam
 

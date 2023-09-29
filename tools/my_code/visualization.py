@@ -1,24 +1,24 @@
 import json
 import os
-import pickle
 import sys
-import csv
+
 import cv2
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import pandas as pd
-## project path and add it into sys path
-project_path = '/scratch2/liuqin/Desktop/LUMPI'
+
+## project path and add it into sys path ## Data path
+project_path = '/Users/qingwuliu/Documents/Code/LUMPI_new/'
+data_path = '/Users/qingwuliu/Documents/measurement4/'
 sys.path.append(project_path)
 from utils.utils import draw_points, get_transform_parameters, points_lid2cam
 
-## Data path
-data_path = '/scratch2/liuqin/dataset/LUMPI'
+
+
 # camera/lidar info
-metadata_path = os.path.join(data_path, 'measurement4/meta.json')
+metadata_path = os.path.join(data_path, 'meta.json')
 # result_path
-save_path = os.path.join(data_path, 'measurement4/results/')
+save_path = os.path.join(data_path, 'results/')
 # save_image_path
 save_image_path = os.path.join(save_path, 'images/')
 # Create path
@@ -56,19 +56,17 @@ total_array = np.array(total_list)
 frame_array = np.unique(total_array[:, 0])
 frame_total_number = len(frame_array)
 
-
-
 for frame_index in tqdm(range(frame_total_number)):
-print(f'frame_index: {frame_index}')
-image = cv2.imread(os.path.join(data_path, f'measurement4/images_fps_30/{"%06d" % frame_index}.jpg'))
-for label_index in range(len(total_list)):
-    annotation_index = total_list[label_index]
-    if int(annotation_index[0]) == frame_index:
-        object_id_index = annotation_index[2]
-        color = colors[str(int(annotation_index[8]))]
-        center_point = np.array([annotation_index[10], annotation_index[11], annotation_index[12]])
-        _, u, v = points_lid2cam(center_point, rotation_matrix_lidar, tvec, K)
-        draw_points(image, u, v, color, object_id_index)
-cv2.imwrite(os.path.join(save_image_path, f'{"%06d" % frame_index}.jpg'), image)
-print(f'Please find {"%06d.jpg" % frame_index} in {save_path}')
+    print(f'frame_index: {frame_index}')
+    image = cv2.imread(os.path.join(data_path, f'images_fps_30/{"%06d" % frame_index}.jpg'))
+    for label_index in range(len(total_list)):
+        annotation_index = total_list[label_index]
+        if int(annotation_index[0]) == frame_index:
+            object_id_index = annotation_index[2]
+            color = colors[str(int(annotation_index[8]))]
+            center_point = np.array([annotation_index[10], annotation_index[11], annotation_index[12]])
+            _, u, v = points_lid2cam(center_point, rotation_matrix_lidar, tvec, K)
+            draw_points(image, u, v, color, object_id_index)
 
+    cv2.imwrite(os.path.join(save_image_path, f'{"%06d" % frame_index}.jpg'), image)
+    print(f'Please find {"%06d.jpg" % frame_index} in {save_path}')
