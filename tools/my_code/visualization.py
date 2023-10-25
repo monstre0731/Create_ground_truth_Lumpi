@@ -56,7 +56,7 @@ total_array = np.array(total_list)
 frame_array = np.unique(total_array[:, 0])
 frame_total_number = len(frame_array)
 
-for frame_index in tqdm(range(frame_total_number)):
+for frame_index in tqdm(range(20)):
     print(f'frame_index: {frame_index}')
     image = cv2.imread(os.path.join(data_path, f'images_fps_30/{"%06d" % frame_index}.jpg'))
     for label_index in range(len(total_list)):
@@ -70,3 +70,24 @@ for frame_index in tqdm(range(frame_total_number)):
 
     cv2.imwrite(os.path.join(save_image_path, f'{"%06d" % frame_index}.jpg'), image)
     print(f'Please find {"%06d.jpg" % frame_index} in {save_path}')
+
+## visualization the points in camera coordinates
+for frame_index in tqdm(range(21)):
+    print(f'frame_index: {frame_index}')
+    image = cv2.imread(os.path.join('/Users/qingwuliu/Documents/Code/LUMPI_new/LUMPI_new/data_example', f'{"%06d" % frame_index}.jpg'))
+    for label_index in range(len(total_list)):
+        annotation_index = total_list[label_index]
+        if int(annotation_index[0]) == frame_index:
+            object_id_index = annotation_index[2]
+            object_x = annotation_index[3]
+            object_y = annotation_index[4]
+            object_z = annotation_index[5]
+            color = colors[str(int(annotation_index[8]))]
+            center_point = np.array([annotation_index[10], annotation_index[11], annotation_index[12]])
+            cam_point, u, v = points_lid2cam(center_point, rotation_matrix_lidar, tvec, K)
+            # object_text = f'({np.round(object_x, 1)},{np.round(object_y, 1)})'
+            object_text = f'({np.round(cam_point[0], 1)},{np.round(cam_point[1], 1)}, {np.round(cam_point[2], 1)})'
+            draw_points(image, u, v, color, object_text)
+    save_image_path = '/Users/qingwuliu/Documents/Code/LUMPI_new/LUMPI_new/results'
+    cv2.imwrite(os.path.join(save_image_path, f'{"%06d" % frame_index}.jpg'), image)
+    print(f'Please find {"%06d.jpg" % frame_index} in {save_image_path}')

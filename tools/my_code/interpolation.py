@@ -38,7 +38,7 @@ for index, row in df.iterrows():
 
 total_array = np.array(total_list)
 total_object_id = np.unique(total_array[:, 2])
-csv_file_path = os.path.join(save_path, f"total_inter_1.csv")
+csv_file_path = os.path.join(save_path, f"total_inter_10_11.csv")
 
 
 total_results = []
@@ -74,8 +74,8 @@ for object_id_index in total_object_id:
 annotation_data_array = np.array(total_results)
 annotation_data_by_frame = annotation_data_array[annotation_data_array[:, 0].argsort()]
 save_path = os.path.join(data_path, 'results/')
-csv_file_path = os.path.join(save_path, f"total_inter.csv")
-check_exists_path(csv_file_path)
+csv_file_path = os.path.join(save_path, f"total_inter_10_11.csv")
+# check_exists_path(csv_file_path)
 with open(csv_file_path, mode='w', newline='') as file:
     csv_writer = csv.writer(file)
     csv_writer.writerows(annotation_data_by_frame)
